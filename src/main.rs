@@ -1,4 +1,4 @@
-use leptos::{*, ev::MouseEvent};
+use leptos::{*, ev::{MouseEvent, SubmitEvent}, html::Input};
 
 fn main() {
     mount_to_body(|cx| view! { cx, <App/> })
@@ -30,7 +30,8 @@ fn App(cx: Scope) -> impl IntoView {
         <p>"count: " {count}</p>
         <p>"double_count: " {double_count}</p>
         <DynamicList initial_length=1 />
-
+        <ControlledInput/>
+        <UncontrolledInput/>
     }
 }
 
@@ -105,4 +106,41 @@ fn DynamicList(
 
 }
 
+#[component]
+fn ControlledInput(cx: Scope) -> impl IntoView {
+    let (name, set_name) = create_signal(cx, "Controlled".to_string());
+    view! { cx,
+        <input type="text"
+            on:input=move |ev| {
+                set_name(event_target_value(&ev));
+            }
+            prop:value=name
+        />
+        <p>"Name is: " {name}</p>
+    }
+}
 
+#[component]
+fn UncontrolledInput(cx: Scope) -> impl IntoView {
+    // uncontrolled inputs get their value from the element 
+    // browser controls the state of the input
+    let (name, set_name) = create_signal(cx, "Controlled".to_string());
+    let input_element: NodeRef<Input> = create_node_ref(cx);
+    let on_submit = move |ev: SubmitEvent| {
+        ev.prevent_default();
+        let value = input_element()
+            .expect("input element to exist")
+            .value();
+        set_name(value);
+    };
+    view! { cx,
+        <form on:submit=on_submit>
+            <input type="text"
+                value=name
+                node_ref=input_element
+            />
+            <input type="submit" value="Submit"/>
+        </form>
+        <p>"uncontrolled name is: " {name}</p>
+    }
+}
